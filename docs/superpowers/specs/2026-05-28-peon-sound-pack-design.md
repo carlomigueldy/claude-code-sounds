@@ -131,19 +131,19 @@ All sounds referenced as `audio/peon/<filename>.mp3` relative to `SOUNDS_DIR`.
 2. On the main board page (already loaded in Playwright), click each sound's "Download this sound" button (26 total, all visible on the listing page)
 3. If the download button triggers a file download, capture the MP3; if it navigates to a download page, follow through
 4. Save downloaded MP3s with kebab-case filenames matching the table above
-5. Generate new `sounds-config.json` with the mapping above
-6. Back up existing config as `sounds-config.json.bak`
-7. Copy new config into both the project repo and `~/.claude/sounds/`
-8. Update `sounds-config.default.json` in the project repo
-9. Run `claude-sounds test --all` to verify all sounds play
-10. Run `make check` to verify tests + lint + validation pass
+5. Back up existing config as `~/.claude/sounds/sounds-config.json.bak`
+6. Generate and write new `~/.claude/sounds/sounds-config.json` with the mapping above
+7. Run `claude-sounds test --all` to verify all sounds play
 
 ## Rollback
 
 `claude-sounds reset` restores from `sounds-config.default.json`. The original default config should be preserved before overwriting.
 
+## Scope
+
+This configures the **installed instance** at `~/.claude/sounds/` only. The source repo at `~/dev/claude-code-sounds/` is not modified (except for this spec doc).
+
 ## Verification
 
 - `claude-sounds test --all` plays every enabled sound
 - `claude-sounds status` shows all categories enabled
-- `make check` passes (tests, shellcheck, JSON validation)
