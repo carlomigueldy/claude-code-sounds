@@ -1,11 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bash tests/*)",
       "Bash(bash tests/run-all.sh)",
-      "Bash(shellcheck *)",
-      "Bash(jq *)",
-      "Bash(make *)",
+      "Bash(bash tests/test-cli.sh)",
+      "Bash(bash tests/test-dispatcher.sh)",
+      "Bash(bash tests/test-install.sh)",
+      "Bash(shellcheck dispatcher.sh claude-sounds install.sh uninstall.sh)",
+      "Bash(jq empty sounds-config.default.json)",
+      "Bash(make check)",
+      "Bash(make test)",
+      "Bash(make lint)",
+      "Bash(make validate)",
       "Bash(git status*)",
       "Bash(git log*)",
       "Bash(git diff*)"
