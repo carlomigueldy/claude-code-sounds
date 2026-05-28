@@ -38,10 +38,33 @@ test_muted_category_skips() {
   assert_mock_not_called "no sound when category muted in state"
 }
 
+test_debounce_allows_first_call() {
+  send_event "TaskCompleted"
+  assert_mock_called "first call plays sound" "say"
+}
+
+test_debounce_blocks_rapid_repeat() {
+  send_event "TaskCompleted"
+  > "$SANDBOX/mock-calls.log"
+  send_event "TaskCompleted"
+  assert_mock_not_called "rapid repeat blocked by debounce"
+}
+
+test_debounce_allows_after_window() {
+  send_event "TaskCompleted"
+  > "$SANDBOX/mock-calls.log"
+  echo "0" > "$SANDBOX/debounce/TaskCompleted"
+  send_event "TaskCompleted"
+  assert_mock_called "plays after debounce window" "say"
+}
+
 echo "=== Dispatcher: mute checks and event lookup ==="
 run_test "global mute skips" test_global_mute_skips
 run_test "unknown event skips" test_unknown_event_skips
 run_test "disabled event skips" test_disabled_event_skips
 run_test "disabled category skips" test_disabled_category_skips
 run_test "muted category skips" test_muted_category_skips
+run_test "debounce allows first call" test_debounce_allows_first_call
+run_test "debounce blocks rapid repeat" test_debounce_blocks_rapid_repeat
+run_test "debounce allows after window" test_debounce_allows_after_window
 report
