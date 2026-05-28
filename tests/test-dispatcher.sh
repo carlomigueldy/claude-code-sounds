@@ -57,10 +57,13 @@ test_tts_plays_message() {
 }
 
 test_volume_multiplied() {
+  # Use an audio event (afplay supports -v), set global_volume to 0.5
+  # Stop has event volume 0.8, so final = 0.8 * 0.5 = .4
+  touch "$SANDBOX/audio/stop.aiff"
   jq '.defaults.global_volume = 0.5' "$SANDBOX/sounds-config.json" > "$SANDBOX/tmp.json" \
     && mv "$SANDBOX/tmp.json" "$SANDBOX/sounds-config.json"
-  send_event "SessionStart"
-  assert_mock_called "volume is multiplied" ".2"
+  send_event "Stop"
+  assert_mock_called "volume is multiplied" ".4"
 }
 
 test_debounce_allows_first_call() {

@@ -72,7 +72,7 @@ elif [ "$sound_type" = "tts" ]; then
   if [ -n "$message" ]; then
     voice=$(jq -r '.defaults.tts_voice // "Samantha"' "$CONFIG")
     rate=$(jq -r '.defaults.tts_rate // 200' "$CONFIG")
-    say -v "$voice" -r "$rate" --volume="$final_vol" "$message" &
+    say -v "$voice" -r "$rate" "$message" &
     wait
   fi
 fi
