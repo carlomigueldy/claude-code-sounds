@@ -173,6 +173,8 @@ cmd_reset() {
     echo "Backed up current config to $CONFIG.bak"
   fi
   cp "$DEFAULT_CONFIG" "$CONFIG"
+  ensure_state
+  jq 'del(.active_pack)' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
   echo "Config reset to defaults."
 }
 
