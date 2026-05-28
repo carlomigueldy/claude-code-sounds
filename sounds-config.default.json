@@ -4,7 +4,7 @@
     "debounce_ms": 2000,
     "tts_voice": "Samantha",
     "tts_rate": 200,
-    "global_volume": 1.0
+    "global_volume": 1
   },
   "categories": {
     "completion": { "enabled": true },

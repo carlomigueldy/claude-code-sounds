@@ -1,0 +1,206 @@
+#!/bin/bash
+set -euo pipefail
+
+SOUNDS_DIR="${CLAUDE_SOUNDS_DIR:-$HOME/.claude/sounds}"
+CONFIG="$SOUNDS_DIR/sounds-config.json"
+STATE="$SOUNDS_DIR/state.json"
+DEFAULT_CONFIG="$SOUNDS_DIR/sounds-config.default.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DISPATCHER="$SCRIPT_DIR/dispatcher.sh"
+
+VALID_CATEGORIES=("completion" "attention" "lifecycle" "progress" "input" "context")
+
+ensure_state() {
+  if [ ! -f "$STATE" ]; then
+    echo '{"global_mute":false,"muted_categories":{}}' > "$STATE"
+  fi
+}
+
+cmd_on() {
+  ensure_state
+  jq '.global_mute = false' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  echo "Claude Code Sounds: ON"
+}
+
+cmd_off() {
+  ensure_state
+  jq '.global_mute = true' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  echo "Claude Code Sounds: OFF"
+}
+
+cmd_status() {
+  ensure_state
+  local global_mute
+  global_mute=$(jq -r '.global_mute // false' "$STATE")
+
+  if [ "$global_mute" = "true" ]; then
+    echo "Claude Code Sounds: OFF"
+  else
+    echo "Claude Code Sounds: ON"
+  fi
+
+  for cat in "${VALID_CATEGORIES[@]}"; do
+    local cat_enabled cat_muted status event_count
+    cat_enabled=$(jq -r ".categories.\"$cat\".enabled // true" "$CONFIG" 2>/dev/null || echo "true")
+    cat_muted=$(jq -r ".muted_categories.\"$cat\" // false" "$STATE")
+    event_count=$(jq -r "[.events[] | select(.category == \"$cat\")] | length" "$CONFIG" 2>/dev/null || echo "0")
+
+    if [ "$cat_enabled" != "true" ] || [ "$cat_muted" = "true" ]; then
+      status="off"
+    else
+      status="on"
+    fi
+
+    printf "  %-14s %-4s (%s events)\n" "$cat" "$status" "$event_count"
+  done
+}
+
+is_valid_category() {
+  local cat="$1"
+  for valid in "${VALID_CATEGORIES[@]}"; do
+    if [ "$cat" = "$valid" ]; then return 0; fi
+  done
+  return 1
+}
+
+cmd_mute() {
+  local cat="${1:-}"
+  if [ -z "$cat" ]; then
+    echo "Usage: claude-sounds mute <category>"
+    echo "Categories: ${VALID_CATEGORIES[*]}"
+    exit 1
+  fi
+  if ! is_valid_category "$cat"; then
+    echo "Unknown category: $cat"
+    echo "Valid categories: ${VALID_CATEGORIES[*]}"
+    exit 1
+  fi
+  ensure_state
+  jq ".muted_categories.\"$cat\" = true" "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  echo "Muted: $cat"
+}
+
+cmd_unmute() {
+  local cat="${1:-}"
+  if [ -z "$cat" ]; then
+    echo "Usage: claude-sounds unmute <category>"
+    echo "Categories: ${VALID_CATEGORIES[*]}"
+    exit 1
+  fi
+  if ! is_valid_category "$cat"; then
+    echo "Unknown category: $cat"
+    echo "Valid categories: ${VALID_CATEGORIES[*]}"
+    exit 1
+  fi
+  ensure_state
+  jq "del(.muted_categories.\"$cat\")" "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  echo "Unmuted: $cat"
+}
+
+cmd_test_event() {
+  local event="${1:-}"
+  if [ "$event" = "--all" ]; then
+    local events
+    events=$(jq -r '.events | to_entries[] | select(.value.enabled == true) | .key' "$CONFIG")
+    for ev in $events; do
+      echo "Testing: $ev"
+      echo "{\"hook_event_name\": \"$ev\"}" | bash "$DISPATCHER"
+      sleep 1
+    done
+    return
+  fi
+  if [ -z "$event" ]; then
+    echo "Usage: claude-sounds test <event|--all>"
+    exit 1
+  fi
+  local event_cfg
+  event_cfg=$(jq -r ".events.\"$event\" // empty" "$CONFIG")
+  if [ -z "$event_cfg" ] || [ "$event_cfg" = "null" ]; then
+    echo "Unknown event: $event"
+    echo "Run 'claude-sounds list' to see available events."
+    exit 1
+  fi
+  rm -f "$SOUNDS_DIR/debounce/$event"
+  echo "{\"hook_event_name\": \"$event\"}" | bash "$DISPATCHER"
+}
+
+cmd_list() {
+  local filter_cat="${1:-}"
+  if [ "$filter_cat" = "--category" ]; then
+    filter_cat="${2:-}"
+    if [ -z "$filter_cat" ]; then
+      echo "Usage: claude-sounds list --category <category>"
+      exit 1
+    fi
+  else
+    filter_cat=""
+  fi
+
+  printf "%-22s %-12s %-6s %-8s %s\n" "EVENT" "CATEGORY" "TYPE" "ENABLED" "SOUND/MESSAGE"
+  printf "%-22s %-12s %-6s %-8s %s\n" "-----" "--------" "----" "-------" "-------------"
+
+  local events_json
+  if [ -n "$filter_cat" ]; then
+    events_json=$(jq -r ".events | to_entries[] | select(.value.category == \"$filter_cat\")" "$CONFIG")
+  else
+    events_json=$(jq -r '.events | to_entries[]' "$CONFIG")
+  fi
+
+  echo "$events_json" | jq -r '
+    [.key,
+     (.value.category // "-"),
+     (.value.type // "-"),
+     (if .value.enabled then "on" else "off" end),
+     (if .value.type == "tts" then .value.message // "-"
+      elif .value.type == "audio" then .value.sound // "-"
+      else "-" end)
+    ] | @tsv' | while IFS=$'\t' read -r name cat type enabled sound; do
+    printf "%-22s %-12s %-6s %-8s %s\n" "$name" "$cat" "$type" "$enabled" "$sound"
+  done
+}
+
+cmd_config() {
+  "${EDITOR:-vi}" "$CONFIG"
+}
+
+cmd_reset() {
+  if [ ! -f "$DEFAULT_CONFIG" ]; then
+    echo "Default config not found at $DEFAULT_CONFIG"
+    exit 1
+  fi
+  if [ -f "$CONFIG" ]; then
+    cp "$CONFIG" "$CONFIG.bak"
+    echo "Backed up current config to $CONFIG.bak"
+  fi
+  cp "$DEFAULT_CONFIG" "$CONFIG"
+  echo "Config reset to defaults."
+}
+
+case "${1:-}" in
+  on)     cmd_on ;;
+  off)    cmd_off ;;
+  status) cmd_status ;;
+  mute)   cmd_mute "${2:-}" ;;
+  unmute) cmd_unmute "${2:-}" ;;
+  test)   cmd_test_event "${2:-}" ;;
+  list)   cmd_list "${2:-}" "${3:-}" ;;
+  config) cmd_config ;;
+  reset)  cmd_reset ;;
+  *)
+    echo "Usage: claude-sounds <command>"
+    echo ""
+    echo "Commands:"
+    echo "  on                    Unmute all sounds"
+    echo "  off                   Mute all sounds"
+    echo "  status                Show current state"
+    echo "  mute <category>       Mute a category"
+    echo "  unmute <category>     Unmute a category"
+    echo "  test <event>          Play sound for an event"
+    echo "  test --all            Play all enabled sounds"
+    echo "  list                  List all events"
+    echo "  list --category <c>   List events in category"
+    echo "  config                Open config in \$EDITOR"
+    echo "  reset                 Reset config to defaults"
+    exit 1
+    ;;
+esac
