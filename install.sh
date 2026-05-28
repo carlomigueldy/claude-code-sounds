@@ -23,8 +23,9 @@ mkdir -p "$INSTALL_DIR/audio" "$INSTALL_DIR/debounce"
 
 cp "$SCRIPT_DIR/dispatcher.sh" "$INSTALL_DIR/dispatcher.sh"
 cp "$SCRIPT_DIR/claude-sounds" "$INSTALL_DIR/claude-sounds"
+cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/uninstall.sh"
 cp "$SCRIPT_DIR/sounds-config.default.json" "$INSTALL_DIR/sounds-config.default.json"
-chmod +x "$INSTALL_DIR/dispatcher.sh" "$INSTALL_DIR/claude-sounds"
+chmod +x "$INSTALL_DIR/dispatcher.sh" "$INSTALL_DIR/claude-sounds" "$INSTALL_DIR/uninstall.sh"
 
 if [ ! -f "$INSTALL_DIR/sounds-config.json" ]; then
   cp "$SCRIPT_DIR/sounds-config.default.json" "$INSTALL_DIR/sounds-config.json"
