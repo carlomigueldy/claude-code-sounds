@@ -160,6 +160,49 @@ test_pack_switch_restores_saved_config() {
   assert_eq "restored saved config with customization" "0.77" "$vol"
 }
 
+test_pack_active_shows_pack() {
+  setup_pack_sandbox
+  create_test_pack
+  bash "$CLI" pack install test-pack
+  local output
+  output=$(bash "$CLI" pack active)
+  assert_contains "shows pack name" "$output" "test-pack"
+  assert_contains "shows version" "$output" "1.0.0"
+}
+
+test_pack_active_no_pack() {
+  setup_pack_sandbox
+  local output
+  output=$(bash "$CLI" pack active)
+  assert_contains "shows no pack" "$output" "No pack active"
+}
+
+test_pack_install_invalid_name() {
+  setup_pack_sandbox
+  local output exit_code=0
+  output=$(bash "$CLI" pack install nonexistent 2>&1) || exit_code=$?
+  assert_contains "shows error" "$output" "not found"
+}
+
+test_pack_install_missing_audio() {
+  setup_pack_sandbox
+  create_test_pack "broken"
+  jq '.events.Stop.sound = "missing.mp3"' "$PACKS_DIR/broken/pack.json" > "$PACKS_DIR/broken/pack.json.tmp" \
+    && mv "$PACKS_DIR/broken/pack.json.tmp" "$PACKS_DIR/broken/pack.json"
+  local output exit_code=0
+  output=$(bash "$CLI" pack install broken 2>&1) || exit_code=$?
+  assert_contains "shows missing audio error" "$output" "missing audio file"
+}
+
+test_pack_install_missing_pack_json() {
+  setup_pack_sandbox
+  mkdir -p "$PACKS_DIR/no-manifest/audio"
+  echo "fake" > "$PACKS_DIR/no-manifest/audio/beep.mp3"
+  local output exit_code=0
+  output=$(bash "$CLI" pack install no-manifest 2>&1) || exit_code=$?
+  assert_contains "shows missing pack.json error" "$output" "missing pack.json"
+}
+
 echo "=== Pack management ==="
 run_test "pack list shows packs" test_pack_list_shows_packs
 run_test "pack list empty" test_pack_list_empty
@@ -174,4 +217,9 @@ run_test "pack install default restores" test_pack_install_default_restores
 run_test "pack install default clears state" test_pack_install_default_clears_state
 run_test "pack install default saves pack config" test_pack_install_default_saves_pack_config
 run_test "pack switch restores saved config" test_pack_switch_restores_saved_config
+run_test "pack active shows pack" test_pack_active_shows_pack
+run_test "pack active no pack" test_pack_active_no_pack
+run_test "pack install invalid name" test_pack_install_invalid_name
+run_test "pack install missing audio" test_pack_install_missing_audio
+run_test "pack install missing pack.json" test_pack_install_missing_pack_json
 report

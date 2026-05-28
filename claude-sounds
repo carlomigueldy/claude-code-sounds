@@ -301,11 +301,30 @@ cmd_pack_install_default() {
   echo "Restored default config.$saved_as"
 }
 
+cmd_pack_active() {
+  ensure_state
+  local active
+  active=$(jq -r '.active_pack // empty' "$STATE")
+  if [ -z "$active" ]; then
+    echo "No pack active (using default config)"
+    return
+  fi
+  local pack_json="$PACKS_DIR/$active/pack.json"
+  if [ -f "$pack_json" ]; then
+    local version
+    version=$(jq -r '.version' "$pack_json")
+    echo "Active pack: $active (v$version)"
+  else
+    echo "Active pack: $active"
+  fi
+}
+
 cmd_pack() {
   local subcmd="${1:-}"
   case "$subcmd" in
     list) cmd_pack_list ;;
     install) cmd_pack_install "${2:-}" ;;
+    active) cmd_pack_active ;;
     *)
       echo "Usage: claude-sounds pack <list|install|active>"
       echo ""
