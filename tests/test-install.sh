@@ -84,6 +84,18 @@ test_uninstall_removes_symlink() {
   teardown_sandbox
 }
 
+test_install_copies_packs() {
+  setup_install_sandbox
+  mkdir -p "$PROJECT_DIR/packs/test-pack/audio"
+  echo '{"name":"test-pack","description":"Test","version":"1.0.0","events":{}}' > "$PROJECT_DIR/packs/test-pack/pack.json"
+  echo "fake" > "$PROJECT_DIR/packs/test-pack/audio/beep.mp3"
+  bash "$INSTALLER" --test
+  assert_file_exists "pack.json copied" "$INSTALL_DIR/packs/test-pack/pack.json"
+  assert_file_exists "audio copied" "$INSTALL_DIR/packs/test-pack/audio/beep.mp3"
+  rm -rf "$PROJECT_DIR/packs/test-pack"
+  teardown_sandbox
+}
+
 echo "=== Install script ==="
 run_test "creates directory structure" test_install_creates_directory_structure
 run_test "preserves existing config" test_install_preserves_existing_config
@@ -92,4 +104,5 @@ run_test "merges hooks" test_install_merges_hooks
 run_test "preserves existing hooks" test_install_preserves_existing_hooks
 run_test "uninstall removes hooks" test_uninstall_removes_hooks
 run_test "uninstall removes symlink" test_uninstall_removes_symlink
+run_test "install copies packs" test_install_copies_packs
 report

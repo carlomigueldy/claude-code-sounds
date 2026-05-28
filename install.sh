@@ -27,6 +27,17 @@ cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/uninstall.sh"
 cp "$SCRIPT_DIR/sounds-config.default.json" "$INSTALL_DIR/sounds-config.default.json"
 chmod +x "$INSTALL_DIR/dispatcher.sh" "$INSTALL_DIR/claude-sounds" "$INSTALL_DIR/uninstall.sh"
 
+# Copy built-in packs (non-destructive: update existing, don't remove custom packs)
+if [ -d "$SCRIPT_DIR/packs" ]; then
+  for pack_dir in "$SCRIPT_DIR/packs"/*/; do
+    [ -d "$pack_dir" ] || continue
+    local_pack_name=$(basename "$pack_dir")
+    mkdir -p "$INSTALL_DIR/packs/$local_pack_name"
+    cp -R "$pack_dir"* "$INSTALL_DIR/packs/$local_pack_name/"
+  done
+  echo "  Copied built-in sound packs"
+fi
+
 if [ ! -f "$INSTALL_DIR/sounds-config.json" ]; then
   cp "$SCRIPT_DIR/sounds-config.default.json" "$INSTALL_DIR/sounds-config.json"
   echo "  Created sounds-config.json"
