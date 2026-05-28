@@ -5,8 +5,7 @@ SOUNDS_DIR="${CLAUDE_SOUNDS_DIR:-$HOME/.claude/sounds}"
 CONFIG="$SOUNDS_DIR/sounds-config.json"
 STATE="$SOUNDS_DIR/state.json"
 DEFAULT_CONFIG="$SOUNDS_DIR/sounds-config.default.json"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DISPATCHER="$SCRIPT_DIR/dispatcher.sh"
+DISPATCHER="$SOUNDS_DIR/dispatcher.sh"
 
 VALID_CATEGORIES=("completion" "attention" "lifecycle" "progress" "input" "context")
 

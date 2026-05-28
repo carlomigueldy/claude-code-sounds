@@ -12,6 +12,8 @@ setup_sandbox() {
   export CLAUDE_SOUNDS_DIR="$SANDBOX"
   mkdir -p "$SANDBOX/audio" "$SANDBOX/debounce"
   cp "$PROJECT_DIR/sounds-config.default.json" "$SANDBOX/sounds-config.json"
+  cp "$PROJECT_DIR/dispatcher.sh" "$SANDBOX/dispatcher.sh"
+  chmod +x "$SANDBOX/dispatcher.sh"
   echo '{"global_mute":false,"muted_categories":{}}' > "$SANDBOX/state.json"
 
   mkdir -p "$SANDBOX/bin"
