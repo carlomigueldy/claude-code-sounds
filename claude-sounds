@@ -6,6 +6,7 @@ CONFIG="$SOUNDS_DIR/sounds-config.json"
 STATE="$SOUNDS_DIR/state.json"
 DEFAULT_CONFIG="$SOUNDS_DIR/sounds-config.default.json"
 DISPATCHER="$SOUNDS_DIR/dispatcher.sh"
+PACKS_DIR="$SOUNDS_DIR/packs"
 
 VALID_CATEGORIES=("completion" "attention" "lifecycle" "progress" "input" "context")
 
@@ -175,6 +176,41 @@ cmd_reset() {
   echo "Config reset to defaults."
 }
 
+cmd_pack_list() {
+  if [ ! -d "$PACKS_DIR" ] || [ -z "$(ls -A "$PACKS_DIR" 2>/dev/null)" ]; then
+    echo "No packs available."
+    return
+  fi
+  echo "Available packs:"
+  for pack_dir in "$PACKS_DIR"/*/; do
+    [ -d "$pack_dir" ] || continue
+    local pack_json="$pack_dir/pack.json"
+    [ -f "$pack_json" ] || continue
+    local name desc version
+    name=$(jq -r '.name' "$pack_json")
+    desc=$(jq -r '.description' "$pack_json")
+    version=$(jq -r '.version' "$pack_json")
+    printf "  %-12s %s (v%s)\n" "$name" "$desc" "$version"
+  done
+}
+
+cmd_pack() {
+  local subcmd="${1:-}"
+  case "$subcmd" in
+    list) cmd_pack_list ;;
+    *)
+      echo "Usage: claude-sounds pack <list|install|active>"
+      echo ""
+      echo "Commands:"
+      echo "  list                  List available sound packs"
+      echo "  install <name>        Install a sound pack"
+      echo "  install default       Restore default config"
+      echo "  active                Show currently active pack"
+      exit 1
+      ;;
+  esac
+}
+
 case "${1:-}" in
   on)     cmd_on ;;
   off)    cmd_off ;;
@@ -185,6 +221,7 @@ case "${1:-}" in
   list)   cmd_list "${2:-}" "${3:-}" ;;
   config) cmd_config ;;
   reset)  cmd_reset ;;
+  pack)   cmd_pack "${2:-}" "${3:-}" ;;
   *)
     echo "Usage: claude-sounds <command>"
     echo ""
@@ -200,6 +237,7 @@ case "${1:-}" in
     echo "  list --category <c>   List events in category"
     echo "  config                Open config in \$EDITOR"
     echo "  reset                 Reset config to defaults"
+    echo "  pack <subcommand>     Manage sound packs"
     exit 1
     ;;
 esac
