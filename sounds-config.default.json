@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "defaults": {
+    "debounce_ms": 2000,
+    "tts_voice": "Samantha",
+    "tts_rate": 200,
+    "global_volume": 1.0
+  },
+  "categories": {
+    "completion": { "enabled": true },
+    "attention": { "enabled": true },
+    "lifecycle": { "enabled": true },
+    "progress": { "enabled": false },
+    "input": { "enabled": true },
+    "context": { "enabled": false }
+  },
+  "events": {
+    "Stop": {
+      "enabled": true,
+      "category": "completion",
+      "type": "audio",
+      "sound": "audio/stop.aiff",
+      "volume": 0.8,
+      "debounce_ms": 2000
+    },
+    "TaskCompleted": {
+      "enabled": true,
+      "category": "completion",
+      "type": "tts",
+      "message": "Task complete",
+      "volume": 0.6,
+      "debounce_ms": 2000
+    },
+    "SubagentStop": {
+      "enabled": true,
+      "category": "completion",
+      "type": "tts",
+      "message": "Agent finished",
+      "volume": 0.5,
+      "debounce_ms": 2000
+    },
+    "SessionEnd": {
+      "enabled": true,
+      "category": "completion",
+      "type": "tts",
+      "message": "Session ended",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "PermissionRequest": {
+      "enabled": true,
+      "category": "attention",
+      "type": "audio",
+      "sound": "audio/permission.aiff",
+      "volume": 0.9,
+      "debounce_ms": 3000
+    },
+    "StopFailure": {
+      "enabled": true,
+      "category": "attention",
+      "type": "audio",
+      "sound": "audio/error.aiff",
+      "volume": 1.0,
+      "debounce_ms": 2000
+    },
+    "PostToolUseFailure": {
+      "enabled": true,
+      "category": "attention",
+      "type": "audio",
+      "sound": "audio/tool-error.aiff",
+      "volume": 0.8,
+      "debounce_ms": 2000
+    },
+    "PermissionDenied": {
+      "enabled": true,
+      "category": "attention",
+      "type": "tts",
+      "message": "Permission denied",
+      "volume": 0.7,
+      "debounce_ms": 2000
+    },
+    "TeammateIdle": {
+      "enabled": true,
+      "category": "attention",
+      "type": "tts",
+      "message": "Teammate idle",
+      "volume": 0.5,
+      "debounce_ms": 5000
+    },
+    "SessionStart": {
+      "enabled": true,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Session started",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "Setup": {
+      "enabled": false,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Setup complete",
+      "volume": 0.3,
+      "debounce_ms": 2000
+    },
+    "SubagentStart": {
+      "enabled": true,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Agent started",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "WorktreeCreate": {
+      "enabled": false,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Worktree created",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "WorktreeRemove": {
+      "enabled": false,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Worktree removed",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "InstructionsLoaded": {
+      "enabled": false,
+      "category": "lifecycle",
+      "type": "tts",
+      "message": "Instructions loaded",
+      "volume": 0.3,
+      "debounce_ms": 2000
+    },
+    "PostToolUse": {
+      "enabled": false,
+      "category": "progress",
+      "type": "audio",
+      "sound": "audio/tool-done.aiff",
+      "volume": 0.3,
+      "debounce_ms": 2000
+    },
+    "PostToolBatch": {
+      "enabled": false,
+      "category": "progress",
+      "type": "tts",
+      "message": "Batch complete",
+      "volume": 0.3,
+      "debounce_ms": 2000
+    },
+    "PreCompact": {
+      "enabled": true,
+      "category": "progress",
+      "type": "tts",
+      "message": "Compacting context",
+      "volume": 0.5,
+      "debounce_ms": 2000
+    },
+    "PostCompact": {
+      "enabled": true,
+      "category": "progress",
+      "type": "tts",
+      "message": "Context compacted",
+      "volume": 0.5,
+      "debounce_ms": 2000
+    },
+    "UserPromptSubmit": {
+      "enabled": false,
+      "category": "input"
+    },
+    "UserPromptExpansion": {
+      "enabled": false,
+      "category": "input"
+    },
+    "Notification": {
+      "enabled": true,
+      "category": "input",
+      "type": "audio",
+      "sound": "audio/notification.aiff",
+      "volume": 0.6,
+      "debounce_ms": 2000
+    },
+    "Elicitation": {
+      "enabled": true,
+      "category": "input",
+      "type": "tts",
+      "message": "Input needed",
+      "volume": 0.6,
+      "debounce_ms": 2000
+    },
+    "ElicitationResult": {
+      "enabled": false,
+      "category": "input"
+    },
+    "MessageDisplay": {
+      "enabled": false,
+      "category": "input"
+    },
+    "CwdChanged": {
+      "enabled": false,
+      "category": "context",
+      "type": "tts",
+      "message": "Directory changed",
+      "volume": 0.3,
+      "debounce_ms": 2000
+    },
+    "FileChanged": {
+      "enabled": false,
+      "category": "context"
+    },
+    "ConfigChange": {
+      "enabled": false,
+      "category": "context",
+      "type": "tts",
+      "message": "Config changed",
+      "volume": 0.4,
+      "debounce_ms": 2000
+    },
+    "PreToolUse": {
+      "enabled": false,
+      "category": "context"
+    }
+  }
+}
