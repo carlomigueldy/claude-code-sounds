@@ -38,6 +38,31 @@ test_muted_category_skips() {
   assert_mock_not_called "no sound when category muted in state"
 }
 
+test_audio_plays_with_file() {
+  touch "$SANDBOX/audio/stop.aiff"
+  send_event "Stop"
+  assert_mock_called "afplay called for audio event" "afplay"
+  assert_mock_called "correct file path" "audio/stop.aiff"
+}
+
+test_audio_skips_missing_file() {
+  send_event "Stop"
+  assert_mock_not_called "no afplay when audio file missing"
+}
+
+test_tts_plays_message() {
+  send_event "SessionStart"
+  assert_mock_called "say called for tts event" "say"
+  assert_mock_called "correct message" "Session started"
+}
+
+test_volume_multiplied() {
+  jq '.defaults.global_volume = 0.5' "$SANDBOX/sounds-config.json" > "$SANDBOX/tmp.json" \
+    && mv "$SANDBOX/tmp.json" "$SANDBOX/sounds-config.json"
+  send_event "SessionStart"
+  assert_mock_called "volume is multiplied" ".2"
+}
+
 test_debounce_allows_first_call() {
   send_event "TaskCompleted"
   assert_mock_called "first call plays sound" "say"
@@ -67,4 +92,8 @@ run_test "muted category skips" test_muted_category_skips
 run_test "debounce allows first call" test_debounce_allows_first_call
 run_test "debounce blocks rapid repeat" test_debounce_blocks_rapid_repeat
 run_test "debounce allows after window" test_debounce_allows_after_window
+run_test "audio plays with file present" test_audio_plays_with_file
+run_test "audio skips missing file" test_audio_skips_missing_file
+run_test "tts plays message" test_tts_plays_message
+run_test "volume is multiplied" test_volume_multiplied
 report
