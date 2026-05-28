@@ -194,10 +194,118 @@ cmd_pack_list() {
   done
 }
 
+cmd_pack_install() {
+  local pack_name="${1:-}"
+  if [ -z "$pack_name" ]; then
+    echo "Usage: claude-sounds pack install <name|default>"
+    exit 1
+  fi
+
+  ensure_state
+
+  if [ "$pack_name" = "default" ]; then
+    cmd_pack_install_default
+    return
+  fi
+
+  local pack_dir="$PACKS_DIR/$pack_name"
+  local pack_json="$pack_dir/pack.json"
+
+  if [ ! -d "$pack_dir" ]; then
+    echo "Error: pack '$pack_name' not found. Run 'claude-sounds pack list' to see available packs."
+    exit 1
+  fi
+  if [ ! -f "$pack_json" ]; then
+    echo "Error: pack '$pack_name' is invalid: missing pack.json"
+    exit 1
+  fi
+
+  # Validate all referenced audio files exist
+  local missing_files=()
+  while IFS= read -r sound_file; do
+    if [ ! -f "$pack_dir/audio/$sound_file" ]; then
+      missing_files+=("$sound_file")
+    fi
+  done < <(jq -r '.events[].sound // empty' "$pack_json")
+
+  if [ ${#missing_files[@]} -gt 0 ]; then
+    echo "Error: pack '$pack_name' is invalid: missing audio file '${missing_files[0]}' referenced in pack.json"
+    exit 1
+  fi
+
+  # Save current config
+  local current_pack
+  current_pack=$(jq -r '.active_pack // empty' "$STATE")
+  if [ -n "$current_pack" ]; then
+    cp "$CONFIG" "$SOUNDS_DIR/sounds-config.$current_pack.json"
+  else
+    cp "$CONFIG" "$SOUNDS_DIR/sounds-config.custom.json"
+  fi
+
+  # Check for previously saved config for this pack
+  local saved_config="$SOUNDS_DIR/sounds-config.$pack_name.json"
+  if [ -f "$saved_config" ]; then
+    cp "$saved_config" "$CONFIG"
+  else
+    # Generate config from pack manifest + defaults
+    local new_config
+    new_config=$(jq --arg pack "$pack_name" --slurpfile pd "$pack_json" '
+      # Use pack categories if present, otherwise keep defaults
+      (if $pd[0].categories then $pd[0].categories else .categories end) as $cats |
+      # Rewrite pack event sound paths
+      ($pd[0].events | to_entries | map(.value.sound = "audio/\($pack)/\(.value.sound)") | from_entries) as $pack_events |
+      {
+        version: .version,
+        defaults: .defaults,
+        categories: $cats,
+        events: (.events + $pack_events)
+      }
+    ' "$DEFAULT_CONFIG")
+    echo "$new_config" > "$CONFIG"
+  fi
+
+  # Copy audio files
+  mkdir -p "$SOUNDS_DIR/audio/$pack_name"
+  cp "$pack_dir/audio/"* "$SOUNDS_DIR/audio/$pack_name/" 2>/dev/null || true
+
+  # Update state
+  jq --arg p "$pack_name" '.active_pack = $p' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+
+  local sound_count
+  sound_count=$(find "$pack_dir/audio/" -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
+  echo "Installed pack '$pack_name' ($sound_count sounds). Previous config saved."
+}
+
+cmd_pack_install_default() {
+  if [ ! -f "$DEFAULT_CONFIG" ]; then
+    echo "Default config not found at $DEFAULT_CONFIG"
+    exit 1
+  fi
+
+  ensure_state
+
+  # Save current config under active pack name
+  local current_pack
+  current_pack=$(jq -r '.active_pack // empty' "$STATE")
+  if [ -n "$current_pack" ] && [ -f "$CONFIG" ]; then
+    cp "$CONFIG" "$SOUNDS_DIR/sounds-config.$current_pack.json"
+  fi
+
+  cp "$DEFAULT_CONFIG" "$CONFIG"
+  jq 'del(.active_pack)' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+
+  local saved_as=""
+  if [ -n "$current_pack" ]; then
+    saved_as=" Previous config saved as $current_pack."
+  fi
+  echo "Restored default config.$saved_as"
+}
+
 cmd_pack() {
   local subcmd="${1:-}"
   case "$subcmd" in
     list) cmd_pack_list ;;
+    install) cmd_pack_install "${2:-}" ;;
     *)
       echo "Usage: claude-sounds pack <list|install|active>"
       echo ""

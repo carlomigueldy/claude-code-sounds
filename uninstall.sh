@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.claude/sounds}"
 SYMLINK_DIR="${SYMLINK_DIR:-/usr/local/bin}"
 SETTINGS_FILE="${SETTINGS_FILE:-$HOME/.claude/settings.json}"
