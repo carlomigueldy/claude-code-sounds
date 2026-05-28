@@ -40,6 +40,10 @@ claude-sounds status              # Show what's enabled
 | `claude-sounds list --category <c>` | Filter by category |
 | `claude-sounds config` | Edit config in $EDITOR |
 | `claude-sounds reset` | Reset to defaults (backs up first) |
+| `claude-sounds pack list` | List available sound packs |
+| `claude-sounds pack install <name>` | Install a sound pack |
+| `claude-sounds pack install default` | Restore default sounds |
+| `claude-sounds pack active` | Show currently active pack |
 
 ## Categories
 
@@ -78,6 +82,56 @@ Place audio files in `~/.claude/sounds/audio/` and reference them in your config
 ```
 
 Supported formats: `.aiff`, `.mp3`, `.wav`, `.m4a` (anything `afplay` supports).
+
+## Sound Packs
+
+Sound packs bundle audio files with event mappings for one-command installation.
+
+**List available packs:**
+
+```bash
+claude-sounds pack list
+```
+
+**Install a pack:**
+
+```bash
+claude-sounds pack install peon
+```
+
+**See what's active:**
+
+```bash
+claude-sounds pack active
+```
+
+**Switch back to defaults:**
+
+```bash
+claude-sounds pack install default
+```
+
+Switching packs saves your current config, so you can switch back without losing customizations.
+
+### Built-in Packs
+
+| Pack | Description |
+|------|-------------|
+| peon | Warcraft III Peon voice lines — 26 sounds across all 29 events |
+
+### Custom Packs
+
+Create your own pack by adding a directory to `~/.claude/sounds/packs/<name>/`:
+
+```
+packs/my-pack/
+  pack.json        # manifest with event mappings
+  audio/
+    sound1.mp3
+    sound2.mp3
+```
+
+See [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) for the pack manifest format.
 
 ## Uninstall
 
