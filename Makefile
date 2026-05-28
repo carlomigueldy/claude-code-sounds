@@ -8,5 +8,6 @@ lint:
 
 validate:
 	jq empty sounds-config.default.json
+	@find packs -name pack.json -exec jq empty {} +
 
 check: validate lint test

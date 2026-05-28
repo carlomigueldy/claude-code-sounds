@@ -278,3 +278,77 @@ CLI mute state is stored separately in `~/.claude/sounds/state.json` and does no
   }
 }
 ```
+
+---
+
+## Sound Packs
+
+Sound packs provide pre-configured sound sets that replace all events at once.
+
+### Using Packs
+
+```bash
+# List available packs
+claude-sounds pack list
+
+# Install a pack
+claude-sounds pack install peon
+
+# See what's active
+claude-sounds pack active
+
+# Switch back to defaults
+claude-sounds pack install default
+```
+
+Installing a pack saves your current config. When you switch back later, your customizations are restored.
+
+### Creating a Pack
+
+A pack is a directory with a `pack.json` manifest and an `audio/` directory:
+
+```
+~/.claude/sounds/packs/my-pack/
+  pack.json
+  audio/
+    chime.mp3
+    alert.mp3
+```
+
+### pack.json Format
+
+```json
+{
+  "name": "my-pack",
+  "description": "My custom sound pack",
+  "version": "1.0.0",
+  "categories": {
+    "completion": { "enabled": true },
+    "attention": { "enabled": true },
+    "lifecycle": { "enabled": true },
+    "progress": { "enabled": false },
+    "input": { "enabled": true },
+    "context": { "enabled": false }
+  },
+  "events": {
+    "Stop": {
+      "enabled": true,
+      "category": "completion",
+      "type": "audio",
+      "sound": "chime.mp3",
+      "volume": 0.8,
+      "debounce_ms": 2000
+    }
+  }
+}
+```
+
+**Required fields:** `name`, `description`, `version`, `events`
+
+**Optional fields:** `author`, `categories`
+
+**Sound paths** are relative to the pack's `audio/` directory — use just the filename (e.g., `"chime.mp3"`, not `"audio/my-pack/chime.mp3"`). The CLI rewrites paths automatically during installation.
+
+**Events not defined** in the pack fall back to the defaults from `sounds-config.default.json`.
+
+**Categories** override the default category settings when present. Omit to keep defaults.
